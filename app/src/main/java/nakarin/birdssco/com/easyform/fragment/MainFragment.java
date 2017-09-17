@@ -1,9 +1,13 @@
 package nakarin.birdssco.com.easyform.fragment;
 
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.annotation.IdRes;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,10 +15,13 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
 
 import nakarin.birdssco.com.easyform.R;
+import nakarin.birdssco.com.easyform.sqlite.MyManager;
+import nakarin.birdssco.com.easyform.sqlite.MyOpenHelper;
 import nakarin.birdssco.com.easyform.utility.MyAlertDialog;
 
 /**
@@ -54,6 +61,8 @@ public class MainFragment extends Fragment{
 
         //spener Controller
         spenerController();
+
+        createListView();
 
     }
 
@@ -127,11 +136,57 @@ public class MainFragment extends Fragment{
                             );
 
                 } else {
-                }
+                    MyManager myManager = new MyManager(getActivity());
+                    myManager.addNameToSQLite(
+                            nameString,
+                            genderString,
+                            provinceStrings[indexAnInt]);
+
+                    //Create listView
+                    createListView();
+                } //if
 
 
             } // onClick
         });
+
+    }
+
+    private void createListView() {
+
+        try {
+
+            SQLiteDatabase sqLiteDatabase = getActivity().openOrCreateDatabase(
+                    MyOpenHelper.datacase_name,
+                    Context.MODE_PRIVATE,
+                    null
+            ); //read sqlite
+            Cursor cursor = sqLiteDatabase.rawQuery("SELECT * FROM nameTABLE", null);
+            cursor.moveToFirst();
+            String[] nameString = new String[cursor.getCount()];
+            String[] genderString = new String[cursor.getCount()];
+            String[] provinceString = new String[cursor.getCount()];
+
+            for (int i=0; i<cursor.getCount(); i+=1) {
+                nameString[i] = cursor.getString(1);
+                genderString[i] = cursor.getString(2);
+                provinceString[i] = cursor.getString(3);
+                Log.d("17sepV1", "Name[" + i + "] ==>" + nameString[i]);
+                cursor.moveToNext();
+            } //for
+
+            ListView listView = getView().findViewById(R.id.LivName);
+            ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<String>(
+                    getActivity(),
+                    android.R.layout.simple_list_item_1,
+                    nameString
+            );
+            listView.setAdapter(stringArrayAdapter);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
 
     }
 }  //Main class
